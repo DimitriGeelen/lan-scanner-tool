@@ -18,7 +18,7 @@ namespace LanScannerTool
 {
     class Program
     {
-        public static readonly string Version = "3.1";
+        public static readonly string Version = "3.1.1";
         
         // Version update utility:
         // When making changes, update version by:
@@ -558,59 +558,80 @@ namespace LanScannerTool
                             {
                                 string ip = ipMatch.Groups[1].Value;
                                 
-                                // Extract hostname if available
+                                // Extract hostname if available but explicitly filter out nmap URLs
                                 string hostname = "unknown";
                                 string fqdn = "";
                                 
                                 Match hostnameMatch = Regex.Match(line, @"Host: .+ \((.*?)\)");
                                 if (hostnameMatch.Success && !string.IsNullOrEmpty(hostnameMatch.Groups[1].Value))
                                 {
-                                    fqdn = hostnameMatch.Groups[1].Value;
-                                    hostname = fqdn.Split('.')[0];
+                                    string potential = hostnameMatch.Groups[1].Value;
+                                    
+                                    // Explicitly check for nmap URLs
+                                    if (potential.Contains("nmap.org") || 
+                                        potential.StartsWith("http://") || 
+                                        potential.StartsWith("https://"))
+                                    {
+                                        // Skip URLs, leave hostname as unknown
+                                        Console.WriteLine($"Filtered out URL from hostname for {ip}: {potential}");
+                                    }
+                                    else
+                                    {
+                                        fqdn = potential;
+                                        hostname = fqdn.Split('.')[0];
+                                    }
                                 }
                                 
                                 // If hostname still unknown, try additional methods
                                 if (hostname == "unknown")
                                 {
-                                    // Try more precise nmap scan for this specific host
-                                    var nmapResult = await TryNmapHostnameResolutionAsync(ip);
-                                    if (!string.IsNullOrEmpty(nmapResult.hostname))
+                                    // Skip additional resolution attempts for known URL cases
+                                    if (line.Contains("nmap.org"))
                                     {
-                                        hostname = nmapResult.hostname;
-                                        fqdn = nmapResult.fqdn;
+                                        Console.WriteLine($"Skipping hostname resolution for {ip} with nmap.org reference");
                                     }
-                                    
-                                    // If still unknown, try DNS resolution
-                                    if (hostname == "unknown")
+                                    else
                                     {
-                                        var dnsResult = await TryDnsResolutionAsync(ip);
-                                        if (!string.IsNullOrEmpty(dnsResult.hostname))
+                                        // Try more precise nmap scan for this specific host
+                                        var nmapResult = await TryNmapHostnameResolutionAsync(ip);
+                                        if (!string.IsNullOrEmpty(nmapResult.hostname))
                                         {
-                                            hostname = dnsResult.hostname;
-                                            fqdn = dnsResult.fqdn;
+                                            hostname = nmapResult.hostname;
+                                            fqdn = nmapResult.fqdn;
                                         }
-                                    }
-                                    
-                                    // As a last resort, try NetBIOS (nmblookup)
-                                    if (hostname == "unknown")
-                                    {
-                                        string netbiosName = await TryNetBiosResolutionAsync(ip);
-                                        if (!string.IsNullOrEmpty(netbiosName))
+                                        
+                                        // If still unknown, try DNS resolution
+                                        if (hostname == "unknown")
                                         {
-                                            hostname = netbiosName;
-                                        }
-                                    }
-                                    
-                                    // If still unknown, try mDNS (Multicast DNS) for discovery of local devices
-                                    if (hostname == "unknown")
-                                    {
-                                        string mdnsName = await TryMdnsResolutionAsync(ip);
-                                        if (!string.IsNullOrEmpty(mdnsName))
-                                        {
-                                            hostname = mdnsName;
-                                            if (string.IsNullOrEmpty(fqdn) && mdnsName.Contains(".local"))
+                                            var dnsResult = await TryDnsResolutionAsync(ip);
+                                            if (!string.IsNullOrEmpty(dnsResult.hostname))
                                             {
-                                                fqdn = mdnsName;
+                                                hostname = dnsResult.hostname;
+                                                fqdn = dnsResult.fqdn;
+                                            }
+                                        }
+                                        
+                                        // As a last resort, try NetBIOS (nmblookup)
+                                        if (hostname == "unknown")
+                                        {
+                                            string netbiosName = await TryNetBiosResolutionAsync(ip);
+                                            if (!string.IsNullOrEmpty(netbiosName))
+                                            {
+                                                hostname = netbiosName;
+                                            }
+                                        }
+                                        
+                                        // If still unknown, try mDNS (Multicast DNS) for discovery of local devices
+                                        if (hostname == "unknown")
+                                        {
+                                            string mdnsName = await TryMdnsResolutionAsync(ip);
+                                            if (!string.IsNullOrEmpty(mdnsName))
+                                            {
+                                                hostname = mdnsName;
+                                                if (string.IsNullOrEmpty(fqdn) && mdnsName.Contains(".local"))
+                                                {
+                                                    fqdn = mdnsName;
+                                                }
                                             }
                                         }
                                     }
@@ -672,20 +693,20 @@ namespace LanScannerTool
             {
                 Console.WriteLine($"Scanning ports on {host.IpAddress}...");
                 
-                // Use nmap to scan common ports with service detection
+                // First try with non-privileged TCP connect scan
                 var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = "nmap",
-                        // -sS: SYN scan
+                        // -sT: TCP connect scan (does not require root)
                         // -sV: Service/version detection
                         // --version-intensity 2: Quicker service detection
                         // -F: Fast mode - scan fewer ports
                         // --open: Only show open ports
                         // --host-timeout 30s: Limit scan time per host
                         // -Pn: Treat all hosts as online (skip ping check)
-                        Arguments = $"-sS -sV -Pn --version-intensity 2 -F --open --host-timeout 30s {host.IpAddress}",
+                        Arguments = $"-sT -sV -Pn --version-intensity 2 -F --open --host-timeout 30s {host.IpAddress}",
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
                         CreateNoWindow = true
@@ -723,7 +744,7 @@ namespace LanScannerTool
                     // Parse port scan results
                     ParsePortScanResults(host, output);
                     
-                    // Try additional scans for OS detection
+                    // Try additional scans for OS detection if we have sudo access
                     await TryOsDetectionAsync(host);
                 }
             }
@@ -774,11 +795,11 @@ namespace LanScannerTool
                 {
                     var detectedService = new DetectedService
                     {
-                        ServiceName = serviceInfo.Name,
+                        ServiceName = serviceInfo.Name ?? "Unknown Service",
                         ServiceType = serviceInfo.Type,
-                        VendorName = serviceInfo.VendorName,
+                        VendorName = serviceInfo.VendorName ?? "Unknown",
                         Port = portInfo.Port,
-                        AccessUrl = GenerateAccessUrl(host.IpAddress, portInfo.Port, serviceInfo.Name)
+                        AccessUrl = GenerateAccessUrl(host.IpAddress, portInfo.Port, serviceInfo.Name ?? "Unknown Service")
                     };
                     
                     host.DetectedServices.Add(detectedService);
@@ -1204,6 +1225,34 @@ namespace LanScannerTool
         {
             try
             {
+                // First try to see if we can extract OS info from the version detection
+                if (string.IsNullOrEmpty(host.OsInfo) && host.OpenPorts.Count > 0)
+                {
+                    foreach (var port in host.OpenPorts)
+                    {
+                        // Service version might contain OS info
+                        string versionInfo = port.Version.ToLower();
+                        
+                        if (versionInfo.Contains("linux") || versionInfo.Contains("ubuntu") || versionInfo.Contains("debian") || 
+                            versionInfo.Contains("centos") || versionInfo.Contains("fedora") || versionInfo.Contains("redhat"))
+                        {
+                            host.OsInfo = "Linux";
+                            break;
+                        }
+                        else if (versionInfo.Contains("windows") || versionInfo.Contains("microsoft") || versionInfo.Contains("win32"))
+                        {
+                            host.OsInfo = "Windows";
+                            break;
+                        }
+                        else if (versionInfo.Contains("apple") || versionInfo.Contains("mac") || versionInfo.Contains("osx") || 
+                                versionInfo.Contains("darwin"))
+                        {
+                            host.OsInfo = "Mac OS";
+                            break;
+                        }
+                    }
+                }
+
                 // Use nmap for OS detection (requires root/admin privileges)
                 var process = new Process
                 {
@@ -1227,6 +1276,18 @@ namespace LanScannerTool
                 
                 if (process.ExitCode == 0)
                 {
+                    // First check if we got a permissions error
+                    if (output.Contains("You requested a scan type which requires root privileges"))
+                    {
+                        Console.WriteLine("OS detection requires root privileges. Skipping.");
+                        // Try alternative method if no OS info yet
+                        if (string.IsNullOrEmpty(host.OsInfo))
+                        {
+                            await TryOsDetectionFromServiceScan(host);
+                        }
+                        return;
+                    }
+                    
                     // Extract OS information
                     Match osMatch = Regex.Match(output, @"OS details: (.+)");
                     if (osMatch.Success && !string.IsNullOrEmpty(osMatch.Groups[1].Value))
@@ -1247,11 +1308,96 @@ namespace LanScannerTool
                             AddServiceIfNotExists(host, "Network Storage (NAS)", ServiceType.FileSharing, "Unknown", 0);
                         }
                     }
+                    else
+                    {
+                        // If no OS found via nmap, try alternative method
+                        await TryOsDetectionFromServiceScan(host);
+                    }
+                }
+                else
+                {
+                    // If nmap OS detection failed, try alternative method
+                    await TryOsDetectionFromServiceScan(host);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error during OS detection for {host.IpAddress}: {ex.Message}");
+                
+                // If error occurs, try alternative method
+                await TryOsDetectionFromServiceScan(host);
+            }
+        }
+        
+        private async Task TryOsDetectionFromServiceScan(HostInfo host)
+        {
+            if (!string.IsNullOrEmpty(host.OsInfo))
+                return;
+                
+            try
+            {
+                // Use a non-privileged scan with more service detection
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "nmap",
+                        // --script banner: Try to get service banners which might reveal OS
+                        Arguments = $"-sV --version-all --script banner {host.IpAddress}",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                
+                process.Start();
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode == 0)
+                {
+                    // Try to determine OS from service banners
+                    if (output.Contains("Windows") || output.Contains("Microsoft"))
+                    {
+                        host.OsInfo = "Windows";
+                    }
+                    else if (output.Contains("Linux") || output.Contains("Ubuntu") || output.Contains("Debian"))
+                    {
+                        host.OsInfo = "Linux";
+                    }
+                    else if (output.Contains("Apple") || output.Contains("Mac") || output.Contains("Darwin"))
+                    {
+                        host.OsInfo = "Mac OS";
+                    }
+                    
+                    // Try to determine device type from port pattern
+                    if (string.IsNullOrEmpty(host.OsInfo))
+                    {
+                        // Common patterns for device types
+                        if (host.OpenPorts.Any(p => p.Port == 80) && 
+                            host.OpenPorts.Any(p => p.Port == 53) && 
+                            host.OpenPorts.Any(p => p.Port == 443))
+                        {
+                            host.OsInfo = "Router/Gateway";
+                            AddServiceIfNotExists(host, "Router/Access Point", ServiceType.Network, "Unknown", 0);
+                        }
+                        else if (host.OpenPorts.Any(p => p.Port == 631))
+                        {
+                            host.OsInfo = "Printer/Print Server";
+                            AddServiceIfNotExists(host, "Printer", ServiceType.Print, "Unknown", 0);
+                        }
+                        else if (host.OpenPorts.Any(p => p.Port == 445) && 
+                                host.OpenPorts.Any(p => p.Port == 139))
+                        {
+                            host.OsInfo = "File Server/NAS";
+                            AddServiceIfNotExists(host, "Network Storage (NAS)", ServiceType.FileSharing, "Unknown", 0);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during alternative OS detection for {host.IpAddress}: {ex.Message}");
             }
         }
 
