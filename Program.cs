@@ -727,7 +727,7 @@ namespace LanScannerTool
             foreach (var portInfo in host.OpenPorts)
             {
                 // Check if it's a known service
-                if (KnownServices.TryGetValue(portInfo.Port, out ServiceInfo serviceInfo))
+                if (KnownServices.TryGetValue(portInfo.Port, out ServiceInfo? serviceInfo) && serviceInfo != null)
                 {
                     var detectedService = new DetectedService
                     {
