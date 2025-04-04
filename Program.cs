@@ -693,14 +693,19 @@ namespace LanScannerTool
                         host.Hostname == "unknown")
                     {
                         string nmapHostname = hostnameMatch.Groups[1].Value.Trim();
-                        if (nmapHostname.Contains("."))
+                        
+                        // Filter out URLs that shouldn't be treated as hostnames
+                        if (!nmapHostname.StartsWith("http://") && !nmapHostname.StartsWith("https://"))
                         {
-                            host.Fqdn = nmapHostname;
-                            host.Hostname = nmapHostname.Split('.')[0];
-                        }
-                        else
-                        {
-                            host.Hostname = nmapHostname;
+                            if (nmapHostname.Contains("."))
+                            {
+                                host.Fqdn = nmapHostname;
+                                host.Hostname = nmapHostname.Split('.')[0];
+                            }
+                            else
+                            {
+                                host.Hostname = nmapHostname;
+                            }
                         }
                     }
                     
