@@ -192,18 +192,32 @@ namespace LanScanner
                                 if (hostname == "unknown")
                                 {
                                     // Try more precise nmap scan for this specific host
-                                    await TryNmapHostnameResolution(ip, ref hostname, ref fqdn);
+                                    var nmapResult = await TryNmapHostnameResolutionAsync(ip);
+                                    if (!string.IsNullOrEmpty(nmapResult.hostname))
+                                    {
+                                        hostname = nmapResult.hostname;
+                                        fqdn = nmapResult.fqdn;
+                                    }
                                     
                                     // If still unknown, try DNS resolution
                                     if (hostname == "unknown")
                                     {
-                                        await TryDnsResolution(ip, ref hostname, ref fqdn);
+                                        var dnsResult = await TryDnsResolutionAsync(ip);
+                                        if (!string.IsNullOrEmpty(dnsResult.hostname))
+                                        {
+                                            hostname = dnsResult.hostname;
+                                            fqdn = dnsResult.fqdn;
+                                        }
                                     }
                                     
                                     // As a last resort, try NetBIOS (nmblookup)
                                     if (hostname == "unknown")
                                     {
-                                        await TryNetBiosResolution(ip, ref hostname);
+                                        string netbiosName = await TryNetBiosResolutionAsync(ip);
+                                        if (!string.IsNullOrEmpty(netbiosName))
+                                        {
+                                            hostname = netbiosName;
+                                        }
                                     }
                                 }
                                 
@@ -224,13 +238,13 @@ namespace LanScanner
                 
                 // Fallback to ping scan if nmap fails
                 Console.WriteLine("Falling back to basic ping scan...");
-                hosts = await FallbackPingScanAsync(network.TrimEnd("/24"));
+                hosts = await FallbackPingScanAsync(network.Replace("/24", ""));
             }
             
             return hosts;
         }
         
-        static async Task TryNmapHostnameResolution(string ip, ref string hostname, ref string fqdn)
+        static async Task<(string hostname, string fqdn)> TryNmapHostnameResolutionAsync(string ip)
         {
             try
             {
@@ -253,17 +267,20 @@ namespace LanScanner
                 Match nmapMatch = Regex.Match(nmapOutput, @"\(\s*([^\(\)]+)\s*\)");
                 if (nmapMatch.Success && !string.IsNullOrEmpty(nmapMatch.Groups[1].Value))
                 {
-                    fqdn = nmapMatch.Groups[1].Value.Trim();
-                    hostname = fqdn.Split('.')[0];
+                    string fqdn = nmapMatch.Groups[1].Value.Trim();
+                    string hostname = fqdn.Split('.')[0];
+                    return (hostname, fqdn);
                 }
             }
             catch
             {
                 // Ignore errors in this attempt
             }
+            
+            return ("", "");
         }
         
-        static async Task TryDnsResolution(string ip, ref string hostname, ref string fqdn)
+        static async Task<(string hostname, string fqdn)> TryDnsResolutionAsync(string ip)
         {
             try
             {
@@ -287,17 +304,24 @@ namespace LanScanner
                 Match fqdnMatch = Regex.Match(dnsOutput, @"name\s*=\s*([^\s]+)");
                 if (fqdnMatch.Success && !string.IsNullOrEmpty(fqdnMatch.Groups[1].Value))
                 {
-                    fqdn = fqdnMatch.Groups[1].Value.TrimEnd('.');
-                    hostname = fqdn.Split('.')[0];
+                    string fqdn = fqdnMatch.Groups[1].Value;
+                    if (fqdn.EndsWith("."))
+                    {
+                        fqdn = fqdn.Substring(0, fqdn.Length - 1);
+                    }
+                    string hostname = fqdn.Split('.')[0];
+                    return (hostname, fqdn);
                 }
             }
             catch
             {
                 // DNS resolution failed, keep as unknown
             }
+            
+            return ("", "");
         }
         
-        static async Task TryNetBiosResolution(string ip, ref string hostname)
+        static async Task<string> TryNetBiosResolutionAsync(string ip)
         {
             try
             {
@@ -339,7 +363,7 @@ namespace LanScanner
                     Match netbiosMatch = Regex.Match(netbiosOutput, @"<([^>]+)><00>");
                     if (netbiosMatch.Success && !string.IsNullOrEmpty(netbiosMatch.Groups[1].Value))
                     {
-                        hostname = netbiosMatch.Groups[1].Value.Trim();
+                        return netbiosMatch.Groups[1].Value.Trim();
                     }
                 }
             }
@@ -347,6 +371,8 @@ namespace LanScanner
             {
                 // NetBIOS resolution failed, keep as unknown
             }
+            
+            return "";
         }
 
         static async Task<List<HostInfo>> FallbackPingScanAsync(string subnet)
