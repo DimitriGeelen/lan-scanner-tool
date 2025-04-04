@@ -16,6 +16,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const servicesTableBody = document.getElementById('servicesTableBody');
     const osInfoText = document.getElementById('osInfoText');
     
+    // Changelog modal
+    const changelogModal = new bootstrap.Modal(document.getElementById('changelogModal'));
+    const changelogLink = document.getElementById('changelogLink');
+    
+    // Show changelog when link is clicked
+    if (changelogLink) {
+        changelogLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            changelogModal.show();
+        });
+    }
+    
     // Current subnet and port scan option
     let currentSubnet = '';
     let currentPortScan = false;

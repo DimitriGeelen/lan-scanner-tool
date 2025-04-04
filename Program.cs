@@ -18,6 +18,16 @@ namespace LanScannerTool
 {
     class Program
     {
+        public static readonly string Version = "3.1";
+        
+        // Version update utility:
+        // When making changes, update version by:
+        // 1. Increment major version for breaking changes
+        // 2. Increment minor version for new features
+        // 3. Increment patch version for bug fixes
+        // Format: MAJOR.MINOR.PATCH
+        // Example: Current: 3.1, Next feature: 3.2, Bug fix: 3.1.1, Breaking change: 4.0
+        
         static async Task Main(string[] args)
         {
             // Check if running in web mode
@@ -182,13 +192,14 @@ namespace LanScannerTool
             // Default route
             app.MapGet("/", () => Results.Redirect("/index.html"));
 
-            Console.WriteLine("Web interface started. Navigate to http://localhost:5000 to access the tool.");
+            Console.WriteLine($"LAN Scanner Tool v{Version} - Web Interface");
+            Console.WriteLine("Navigate to http://localhost:5000 to access the tool.");
             await app.RunAsync();
         }
 
         static async Task RunConsoleMode(string[] args)
         {
-            Console.WriteLine("LAN Scanner Tool");
+            Console.WriteLine($"LAN Scanner Tool v{Version}");
             Console.WriteLine("-----------------");
 
             // Check and install nmap if needed

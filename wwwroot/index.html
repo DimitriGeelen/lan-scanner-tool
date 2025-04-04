@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LAN Scanner Tool</title>
+    <title>LAN Scanner Tool v3.1</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/site.css">
@@ -11,7 +11,17 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">LAN Scanner Tool</a>
+            <a class="navbar-brand" href="#">LAN Scanner Tool <span class="badge bg-light text-dark">v3.1</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="changelogLink">Changelog</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
@@ -149,7 +159,7 @@
                     </div>
                     <div class="card-body">
                         <p>
-                            The LAN Scanner Tool is a powerful network scanning utility that helps you discover devices on your local network.
+                            <strong>LAN Scanner Tool v3.1</strong> is a powerful network scanning utility that helps you discover devices on your local network.
                             It uses Nmap for efficient host discovery and tries multiple methods to resolve hostnames.
                         </p>
                         <p>
@@ -193,9 +203,72 @@
         </div>
     </div>
 
+    <!-- Changelog Modal -->
+    <div class="modal fade" id="changelogModal" tabindex="-1" aria-labelledby="changelogModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changelogModalLabel">Changelog</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="changelog">
+                        <div class="version">
+                            <h5>Version 3.1 <small class="text-muted">April 2023</small></h5>
+                            <ul>
+                                <li>Fixed hostname resolution by filtering out URLs from hostname detection</li>
+                                <li>Added detailed troubleshooting section to the web interface</li>
+                                <li>Improved JSON serialization for better display of scan results</li>
+                                <li>Enhanced DNS resolution with multiple methods (Google DNS, local DNS, .NET DNS)</li>
+                                <li>Added version indicator to web interface</li>
+                                <li>Added changelog feature</li>
+                            </ul>
+                        </div>
+                        <hr>
+                        <div class="version">
+                            <h5>Version 3.0 <small class="text-muted">March 2023</small></h5>
+                            <ul>
+                                <li>Added web interface with responsive design</li>
+                                <li>Implemented dual-mode application (console and web interfaces)</li>
+                                <li>Created API endpoints for scanning and downloading results</li>
+                                <li>Enhanced service detection with detailed modal display</li>
+                                <li>Improved CSV export with more detailed information</li>
+                            </ul>
+                        </div>
+                        <hr>
+                        <div class="version">
+                            <h5>Version 2.0 <small class="text-muted">February 2023</small></h5>
+                            <ul>
+                                <li>Enhanced service detection capabilities</li>
+                                <li>Added over 70 new service ports for various categories</li>
+                                <li>Implemented advanced fingerprinting for specific software</li>
+                                <li>Added multi-method hostname resolution</li>
+                                <li>Implemented operating system detection</li>
+                            </ul>
+                        </div>
+                        <hr>
+                        <div class="version">
+                            <h5>Version 1.0 <small class="text-muted">January 2023</small></h5>
+                            <ul>
+                                <li>Initial release with command-line interface</li>
+                                <li>Basic subnet scanning functionality</li>
+                                <li>Integrated nmap for device discovery</li>
+                                <li>Simple hostname resolution</li>
+                                <li>Basic CSV output</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer mt-auto py-3 bg-light">
         <div class="container text-center">
-            <span class="text-muted">LAN Scanner Tool v3.0 &copy; 2025 Dimitri Geelen</span>
+            <span class="text-muted">LAN Scanner Tool v3.1 &copy; 2025 Dimitri Geelen</span>
         </div>
     </footer>
 
