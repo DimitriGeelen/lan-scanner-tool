@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAN Scanner Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">LAN Scanner Tool</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Network Scanner</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="scanForm">
+                            <div class="mb-3">
+                                <label for="subnet" class="form-label">Subnet to scan</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="subnet" name="subnet" placeholder="e.g., 192.168.1.0/24" required>
+                                    <button type="submit" class="btn btn-primary" id="scanButton">
+                                        <span class="spinner-border spinner-border-sm d-none" id="scanSpinner" role="status" aria-hidden="true"></span>
+                                        Scan Network
+                                    </button>
+                                </div>
+                                <div class="form-text">Enter a subnet like 192.168.1.0/24 or just 192.168.1</div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Scan Results</h5>
+                        <button class="btn btn-success btn-sm d-none" id="downloadCsvButton">Download CSV</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultsInfo" class="alert alert-info">
+                            Enter a subnet and click "Scan Network" to start scanning.
+                        </div>
+                        <div class="table-responsive d-none" id="resultsTable">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>IP Address</th>
+                                        <th>Hostname</th>
+                                        <th>FQDN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>About</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            The LAN Scanner Tool is a powerful network scanning utility that helps you discover devices on your local network.
+                            It uses Nmap for efficient host discovery and tries multiple methods to resolve hostnames.
+                        </p>
+                        <p>
+                            <strong>Features:</strong>
+                        </p>
+                        <ul>
+                            <li>Scan entire subnets for active hosts</li>
+                            <li>Resolve hostnames and FQDNs when available</li>
+                            <li>Export results to CSV format</li>
+                            <li>Web interface for easy access</li>
+                        </ul>
+                        <p>
+                            You can also use this tool from the command line:
+                        </p>
+                        <pre><code>dotnet run 192.168.1</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">LAN Scanner Tool v2.0 &copy; 2025 Dimitri Geelen</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/site.js"></script>
+</body>
+</html> 

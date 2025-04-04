@@ -8,18 +8,139 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-namespace LanScanner
+namespace LanScannerTool
 {
     class Program
     {
         static async Task Main(string[] args)
         {
+            // Check if running in web mode
+            bool webMode = args.Length > 0 && args[0].Equals("--web", StringComparison.OrdinalIgnoreCase);
+
+            if (webMode)
+            {
+                await RunWebMode(args);
+            }
+            else
+            {
+                await RunConsoleMode(args);
+            }
+        }
+
+        static async Task RunWebMode(string[] args)
+        {
+            // Check and install nmap if needed
+            await NetworkScanner.EnsureNmapInstalledAsync();
+
+            var builder = WebApplication.CreateBuilder(args);
+
+            // Add services to the container
+            builder.Services.AddSingleton<NetworkScanner>();
+            
+            // Add Razor Pages
+            builder.Services.AddRazorPages();
+
+            var app = builder.Build();
+
+            // Configure middleware
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Error");
+                app.UseHsts();
+            }
+
+            app.UseStaticFiles();
+            app.UseRouting();
+
+            // Define endpoints
+            app.MapRazorPages();
+            
+            // API endpoint to scan network
+            app.MapPost("/api/scan", async (HttpContext context, NetworkScanner scanner) =>
+            {
+                try
+                {
+                    var form = await context.Request.ReadFormAsync();
+                    string subnet = form["subnet"].ToString();
+                    
+                    if (string.IsNullOrWhiteSpace(subnet))
+                    {
+                        return Results.BadRequest("Subnet parameter is required");
+                    }
+
+                    Console.WriteLine($"Starting scan of subnet: {subnet}");
+                    var hosts = await scanner.ScanNetworkWithNmapAsync(subnet);
+                    
+                    return Results.Json(hosts);
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(ex.Message);
+                }
+            });
+
+            // API endpoint to download CSV
+            app.MapGet("/api/download-csv", async (HttpContext context, NetworkScanner scanner) =>
+            {
+                try
+                {
+                    string subnet = context.Request.Query["subnet"].ToString();
+                    
+                    if (string.IsNullOrWhiteSpace(subnet))
+                    {
+                        return Results.BadRequest("Subnet parameter is required");
+                    }
+
+                    var hosts = await scanner.ScanNetworkWithNmapAsync(subnet);
+                    
+                    // Generate CSV content
+                    StringBuilder csv = new StringBuilder();
+                    csv.AppendLine("IP Address,Hostname,FQDN");
+                    
+                    foreach (var host in hosts)
+                    {
+                        string hostname = host.Hostname.Contains(",") ? $"\"{host.Hostname}\"" : host.Hostname;
+                        string fqdn = host.Fqdn.Contains(",") ? $"\"{host.Fqdn}\"" : host.Fqdn;
+                        
+                        csv.AppendLine($"{host.IpAddress},{hostname},{fqdn}");
+                    }
+                    
+                    // Return CSV file
+                    byte[] csvBytes = Encoding.UTF8.GetBytes(csv.ToString());
+                    return Results.File(
+                        fileContents: csvBytes,
+                        contentType: "text/csv",
+                        fileDownloadName: "hostnames.csv"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(ex.Message);
+                }
+            });
+
+            // Default route
+            app.MapGet("/", () => Results.Redirect("/index.html"));
+
+            Console.WriteLine("Web interface started. Navigate to http://localhost:5000 to access the tool.");
+            await app.RunAsync();
+        }
+
+        static async Task RunConsoleMode(string[] args)
+        {
             Console.WriteLine("LAN Scanner Tool");
             Console.WriteLine("-----------------");
 
             // Check and install nmap if needed
-            await EnsureNmapInstalledAsync();
+            await NetworkScanner.EnsureNmapInstalledAsync();
+            
+            var scanner = new NetworkScanner();
 
             string subnet = "";
 
@@ -40,7 +161,7 @@ namespace LanScanner
 
             Console.WriteLine($"Scanning subnet: {subnet}0/24...");
             
-            List<HostInfo> hosts = await ScanNetworkWithNmapAsync($"{subnet}0/24");
+            List<HostInfo> hosts = await scanner.ScanNetworkWithNmapAsync($"{subnet}0/24");
             
             foreach (var host in hosts)
             {
@@ -51,12 +172,15 @@ namespace LanScanner
             
             // Save to CSV
             string csvPath = Path.Combine(Environment.CurrentDirectory, "hostnames.csv");
-            SaveToCsv(hosts, csvPath);
+            NetworkScanner.SaveToCsv(hosts, csvPath);
             
             Console.WriteLine($"Results saved to: {csvPath}");
         }
-
-        static async Task EnsureNmapInstalledAsync()
+    }
+    
+    public class NetworkScanner
+    {
+        public static async Task EnsureNmapInstalledAsync()
         {
             bool nmapInstalled = false;
             
@@ -135,9 +259,26 @@ namespace LanScanner
             }
         }
 
-        static async Task<List<HostInfo>> ScanNetworkWithNmapAsync(string network)
+        public async Task<List<HostInfo>> ScanNetworkWithNmapAsync(string network)
         {
             List<HostInfo> hosts = new List<HostInfo>();
+            
+            // Ensure network format includes /24 if not present
+            if (!network.Contains("/"))
+            {
+                if (network.EndsWith("."))
+                {
+                    network = $"{network}0/24";
+                }
+                else if (network.Split('.').Length == 3)
+                {
+                    network = $"{network}.0/24";
+                }
+                else if (network.Split('.').Length == 4)
+                {
+                    network = $"{network}/24";
+                }
+            }
             
             try
             {
@@ -244,7 +385,7 @@ namespace LanScanner
             return hosts;
         }
         
-        static async Task<(string hostname, string fqdn)> TryNmapHostnameResolutionAsync(string ip)
+        private async Task<(string hostname, string fqdn)> TryNmapHostnameResolutionAsync(string ip)
         {
             try
             {
@@ -280,7 +421,7 @@ namespace LanScanner
             return ("", "");
         }
         
-        static async Task<(string hostname, string fqdn)> TryDnsResolutionAsync(string ip)
+        private async Task<(string hostname, string fqdn)> TryDnsResolutionAsync(string ip)
         {
             try
             {
@@ -321,7 +462,7 @@ namespace LanScanner
             return ("", "");
         }
         
-        static async Task<string> TryNetBiosResolutionAsync(string ip)
+        private async Task<string> TryNetBiosResolutionAsync(string ip)
         {
             try
             {
@@ -375,7 +516,7 @@ namespace LanScanner
             return "";
         }
 
-        static async Task<List<HostInfo>> FallbackPingScanAsync(string subnet)
+        private async Task<List<HostInfo>> FallbackPingScanAsync(string subnet)
         {
             List<HostInfo> hosts = new List<HostInfo>();
             var tasks = new List<Task<HostInfo?>>();
@@ -408,7 +549,7 @@ namespace LanScanner
             return hosts;
         }
 
-        static async Task<HostInfo?> ScanHostAsync(string ipAddress)
+        private async Task<HostInfo?> ScanHostAsync(string ipAddress)
         {
             try
             {
@@ -447,7 +588,7 @@ namespace LanScanner
             return null;
         }
 
-        static void SaveToCsv(List<HostInfo> hosts, string filePath)
+        public static void SaveToCsv(List<HostInfo> hosts, string filePath)
         {
             StringBuilder csv = new StringBuilder();
             
@@ -469,7 +610,7 @@ namespace LanScanner
         }
     }
 
-    class HostInfo
+    public class HostInfo
     {
         public string IpAddress { get; set; } = "";
         public string Hostname { get; set; } = "";
