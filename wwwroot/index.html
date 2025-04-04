@@ -25,14 +25,19 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <div class="container mt-5">
         <div class="row">
             <div class="col-md-12">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-header">
-                        <h5>Network Scanner</h5>
+                        <h5 class="card-title mb-0">Network Scanner</h5>
                     </div>
                     <div class="card-body">
+                        <div class="alert alert-info" role="alert">
+                            <strong>Note:</strong> For full functionality including OS detection and comprehensive port scanning, 
+                            consider running the tool with root/admin privileges via <code>sudo dotnet run --web</code>. 
+                            When run without elevated privileges, the tool will still work but with limited capabilities.
+                        </div>
                         <form id="scanForm">
                             <div class="mb-3">
                                 <label for="subnet" class="form-label">Subnet to scan</label>

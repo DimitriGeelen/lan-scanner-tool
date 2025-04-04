@@ -49,6 +49,9 @@ namespace LanScannerTool
             await NetworkScanner.EnsureNmapInstalledAsync();
 
             var builder = WebApplication.CreateBuilder(args);
+            
+            // Set a different port if the default port is in use
+            builder.WebHost.UseUrls("http://localhost:5000", "http://localhost:5001", "http://localhost:5002");
 
             // Add services to the container
             builder.Services.AddSingleton<NetworkScanner>();
@@ -57,6 +60,8 @@ namespace LanScannerTool
             builder.Services.AddRazorPages();
 
             var app = builder.Build();
+            
+            bool isRootUser = Environment.GetEnvironmentVariable("USER") == "root";
 
             // Configure middleware
             if (!app.Environment.IsDevelopment())
@@ -86,6 +91,13 @@ namespace LanScannerTool
                     }
 
                     Console.WriteLine($"Starting scan of subnet: {subnet} with port scanning: {includePortScan}");
+                    
+                    // Warn about root privileges
+                    if (includePortScan && !isRootUser)
+                    {
+                        Console.WriteLine("Note: Some Nmap features require root privileges. Limited functionality may be available.");
+                    }
+                    
                     var hosts = await scanner.ScanNetworkWithNmapAsync(subnet, includePortScan);
                     
                     // Convert to a format that will properly serialize
@@ -193,8 +205,39 @@ namespace LanScannerTool
             app.MapGet("/", () => Results.Redirect("/index.html"));
 
             Console.WriteLine($"LAN Scanner Tool v{Version} - Web Interface");
-            Console.WriteLine("Navigate to http://localhost:5000 to access the tool.");
-            await app.RunAsync();
+            
+            if (!isRootUser)
+            {
+                Console.WriteLine("Note: Running without root privileges. Some features like OS detection");
+                Console.WriteLine("and SYN scan will use alternative methods with potentially limited results.");
+                Console.WriteLine("For full functionality, consider running with 'sudo dotnet run --web'");
+            }
+            
+            try 
+            {
+                Console.WriteLine("Navigate to http://localhost:5000 to access the tool.");
+                await app.RunAsync();
+            }
+            catch (IOException ex) when (ex.Message.Contains("address already in use"))
+            {
+                // Try alternate ports
+                try 
+                {
+                    Console.WriteLine("Port 5000 is in use. Trying port 5001...");
+                    builder.WebHost.UseUrls("http://localhost:5001");
+                    app = builder.Build();
+                    Console.WriteLine("Navigate to http://localhost:5001 to access the tool.");
+                    await app.RunAsync();
+                }
+                catch (IOException ex2) when (ex2.Message.Contains("address already in use"))
+                {
+                    Console.WriteLine("Port 5001 is also in use. Trying port 5002...");
+                    builder.WebHost.UseUrls("http://localhost:5002");
+                    app = builder.Build();
+                    Console.WriteLine("Navigate to http://localhost:5002 to access the tool.");
+                    await app.RunAsync();
+                }
+            }
         }
 
         static async Task RunConsoleMode(string[] args)
