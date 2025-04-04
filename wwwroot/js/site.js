@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const serviceModalLabel = document.getElementById('serviceModalLabel');
     const portsTableBody = document.getElementById('portsTableBody');
     const servicesTableBody = document.getElementById('servicesTableBody');
+    const osInfoText = document.getElementById('osInfoText');
     
     // Current subnet and port scan option
     let currentSubnet = '';
@@ -22,10 +23,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show services column if port scanning is enabled
     includePortScanCheckbox.addEventListener('change', function() {
         const servicesColumn = document.querySelector('.col-services');
+        const osColumn = document.querySelector('.col-os');
         if (this.checked) {
             servicesColumn.classList.remove('d-none');
+            osColumn.classList.remove('d-none');
         } else {
             servicesColumn.classList.add('d-none');
+            osColumn.classList.add('d-none');
         }
     });
     
@@ -41,10 +45,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update UI based on port scan option
         const servicesColumn = document.querySelector('.col-services');
+        const osColumn = document.querySelector('.col-os');
         if (currentPortScan) {
             servicesColumn.classList.remove('d-none');
+            osColumn.classList.remove('d-none');
         } else {
             servicesColumn.classList.add('d-none');
+            osColumn.classList.add('d-none');
         }
         
         // Show loading state
@@ -167,6 +174,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             row.appendChild(servicesCell);
             
+            // OS Info
+            const osCell = document.createElement('td');
+            if (host.osInfo) {
+                osCell.textContent = host.osInfo;
+            } else {
+                osCell.textContent = '—';
+            }
+            osCell.classList.add('col-os');
+            if (!currentPortScan) {
+                osCell.classList.add('d-none');
+            }
+            row.appendChild(osCell);
+            
             // Add the row to the table
             resultsBody.appendChild(row);
         });
@@ -179,6 +199,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function showServiceDetails(host) {
         // Set modal title
         serviceModalLabel.textContent = `Services on ${host.ipAddress} (${host.hostname})`;
+        
+        // Set OS information
+        osInfoText.textContent = host.osInfo || 'Unknown';
         
         // Clear previous data
         portsTableBody.innerHTML = '';

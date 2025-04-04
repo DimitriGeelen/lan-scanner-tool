@@ -260,6 +260,13 @@ namespace LanScannerTool
             // Synology DSM
             { 5000, new ServiceInfo { Name = "Synology DSM", Type = ServiceType.AdminInterface, VendorName = "Synology" } },
             { 5001, new ServiceInfo { Name = "Synology DSM (HTTPS)", Type = ServiceType.AdminInterface, VendorName = "Synology" } },
+            { 5005, new ServiceInfo { Name = "Synology DiskStation", Type = ServiceType.AdminInterface, VendorName = "Synology" } },
+            { 5006, new ServiceInfo { Name = "Synology DiskStation (HTTPS)", Type = ServiceType.AdminInterface, VendorName = "Synology" } },
+            
+            // QNAP
+            { 8080, new ServiceInfo { Name = "QNAP Web Admin", Type = ServiceType.AdminInterface, VendorName = "QNAP" } },
+            { 8443, new ServiceInfo { Name = "QNAP Web Admin (HTTPS)", Type = ServiceType.AdminInterface, VendorName = "QNAP" } },
+            { 8181, new ServiceInfo { Name = "QNAP QTS", Type = ServiceType.AdminInterface, VendorName = "QNAP" } },
             
             // Pi-hole
             { 80, new ServiceInfo { Name = "HTTP (Possible Pi-hole/Web UI)", Type = ServiceType.AdminInterface, VendorName = "Various" } },
@@ -268,28 +275,117 @@ namespace LanScannerTool
             // NPMPlus
             { 81, new ServiceInfo { Name = "NPMPlus/Nginx Proxy Manager", Type = ServiceType.AdminInterface, VendorName = "NPMPlus" } },
             
+            // UniFi
+            { 8443, new ServiceInfo { Name = "UniFi Controller", Type = ServiceType.AdminInterface, VendorName = "Ubiquiti" } },
+            { 8080, new ServiceInfo { Name = "UniFi Controller (Alternative)", Type = ServiceType.AdminInterface, VendorName = "Ubiquiti" } },
+            { 8880, new ServiceInfo { Name = "UniFi Video", Type = ServiceType.AdminInterface, VendorName = "Ubiquiti" } },
+            { 8843, new ServiceInfo { Name = "UniFi Guest Portal", Type = ServiceType.AdminInterface, VendorName = "Ubiquiti" } },
+            
+            // TrueNAS/FreeNAS
+            { 80, new ServiceInfo { Name = "TrueNAS/FreeNAS Web UI", Type = ServiceType.AdminInterface, VendorName = "iXsystems" } },
+            { 443, new ServiceInfo { Name = "TrueNAS/FreeNAS Web UI (HTTPS)", Type = ServiceType.AdminInterface, VendorName = "iXsystems" } },
+            
+            // OPNsense/pfSense
+            { 443, new ServiceInfo { Name = "OPNsense/pfSense Web UI", Type = ServiceType.AdminInterface, VendorName = "OPNsense/pfSense" } },
+            { 80, new ServiceInfo { Name = "OPNsense/pfSense Web UI (HTTP)", Type = ServiceType.AdminInterface, VendorName = "OPNsense/pfSense" } },
+            
+            // Home Assistant
+            { 8123, new ServiceInfo { Name = "Home Assistant", Type = ServiceType.IoT, VendorName = "Home Assistant" } },
+            
+            // Docker
+            { 2375, new ServiceInfo { Name = "Docker API", Type = ServiceType.AdminInterface, VendorName = "Docker" } },
+            { 2376, new ServiceInfo { Name = "Docker API (TLS)", Type = ServiceType.AdminInterface, VendorName = "Docker" } },
+            { 9000, new ServiceInfo { Name = "Portainer", Type = ServiceType.AdminInterface, VendorName = "Portainer" } },
+            
             // Common Web UI ports
             { 8080, new ServiceInfo { Name = "Web UI (Alternative HTTP)", Type = ServiceType.WebServer, VendorName = "Various" } },
             { 8443, new ServiceInfo { Name = "Web UI (Alternative HTTPS)", Type = ServiceType.WebServer, VendorName = "Various" } },
+            { 8000, new ServiceInfo { Name = "Web UI", Type = ServiceType.WebServer, VendorName = "Various" } },
+            { 8008, new ServiceInfo { Name = "Web UI", Type = ServiceType.WebServer, VendorName = "Various" } },
+            { 8888, new ServiceInfo { Name = "Web UI", Type = ServiceType.WebServer, VendorName = "Various" } },
+            
+            // Network hardware
+            { 4443, new ServiceInfo { Name = "Router/Access Point Admin", Type = ServiceType.AdminInterface, VendorName = "Various" } },
+            { 1900, new ServiceInfo { Name = "UPnP", Type = ServiceType.IoT, VendorName = "Various" } },
             
             // Common services
             { 22, new ServiceInfo { Name = "SSH", Type = ServiceType.RemoteAccess, VendorName = "Various" } },
             { 23, new ServiceInfo { Name = "Telnet", Type = ServiceType.RemoteAccess, VendorName = "Various" } },
             { 21, new ServiceInfo { Name = "FTP", Type = ServiceType.FileSharing, VendorName = "Various" } },
+            { 20, new ServiceInfo { Name = "FTP Data", Type = ServiceType.FileSharing, VendorName = "Various" } },
+            { 990, new ServiceInfo { Name = "FTPS", Type = ServiceType.FileSharing, VendorName = "Various" } },
+            { 989, new ServiceInfo { Name = "FTPS Data", Type = ServiceType.FileSharing, VendorName = "Various" } },
             { 445, new ServiceInfo { Name = "SMB/CIFS", Type = ServiceType.FileSharing, VendorName = "Various" } },
             { 139, new ServiceInfo { Name = "NetBIOS", Type = ServiceType.FileSharing, VendorName = "Various" } },
             { 3389, new ServiceInfo { Name = "Remote Desktop", Type = ServiceType.RemoteAccess, VendorName = "Microsoft" } },
+            { 5900, new ServiceInfo { Name = "VNC", Type = ServiceType.RemoteAccess, VendorName = "Various" } },
+            { 5901, new ServiceInfo { Name = "VNC (Display 1)", Type = ServiceType.RemoteAccess, VendorName = "Various" } },
+            { 5902, new ServiceInfo { Name = "VNC (Display 2)", Type = ServiceType.RemoteAccess, VendorName = "Various" } },
+            
+            // Printing
+            { 9100, new ServiceInfo { Name = "Printer - RAW", Type = ServiceType.Print, VendorName = "Various" } },
+            { 515, new ServiceInfo { Name = "Printer - LPD", Type = ServiceType.Print, VendorName = "Various" } },
+            { 631, new ServiceInfo { Name = "IPP/CUPS", Type = ServiceType.Print, VendorName = "Various" } },
             
             // Database ports
             { 3306, new ServiceInfo { Name = "MySQL", Type = ServiceType.Database, VendorName = "Oracle" } },
             { 5432, new ServiceInfo { Name = "PostgreSQL", Type = ServiceType.Database, VendorName = "PostgreSQL" } },
             { 1433, new ServiceInfo { Name = "MS SQL Server", Type = ServiceType.Database, VendorName = "Microsoft" } },
+            { 1434, new ServiceInfo { Name = "MS SQL Browser", Type = ServiceType.Database, VendorName = "Microsoft" } },
             { 27017, new ServiceInfo { Name = "MongoDB", Type = ServiceType.Database, VendorName = "MongoDB" } },
+            { 6379, new ServiceInfo { Name = "Redis", Type = ServiceType.Database, VendorName = "Redis" } },
+            { 9200, new ServiceInfo { Name = "Elasticsearch", Type = ServiceType.Database, VendorName = "Elastic" } },
+            { 9300, new ServiceInfo { Name = "Elasticsearch Transport", Type = ServiceType.Database, VendorName = "Elastic" } },
             
             // Media servers
             { 32400, new ServiceInfo { Name = "Plex Media Server", Type = ServiceType.MediaServer, VendorName = "Plex" } },
+            { 32469, new ServiceInfo { Name = "Plex DLNA Server", Type = ServiceType.MediaServer, VendorName = "Plex" } },
             { 8096, new ServiceInfo { Name = "Jellyfin", Type = ServiceType.MediaServer, VendorName = "Jellyfin" } },
-            { 8920, new ServiceInfo { Name = "Emby", Type = ServiceType.MediaServer, VendorName = "Emby" } }
+            { 8200, new ServiceInfo { Name = "Jellyfin DLNA", Type = ServiceType.MediaServer, VendorName = "Jellyfin" } },
+            { 8920, new ServiceInfo { Name = "Emby", Type = ServiceType.MediaServer, VendorName = "Emby" } },
+            { 8060, new ServiceInfo { Name = "Roku HTTP", Type = ServiceType.MediaServer, VendorName = "Roku" } },
+            { 1900, new ServiceInfo { Name = "DLNA/SSDP", Type = ServiceType.MediaServer, VendorName = "Various" } },
+            
+            // Email
+            { 25, new ServiceInfo { Name = "SMTP", Type = ServiceType.EmailServer, VendorName = "Various" } },
+            { 465, new ServiceInfo { Name = "SMTP SSL", Type = ServiceType.EmailServer, VendorName = "Various" } },
+            { 587, new ServiceInfo { Name = "SMTP TLS", Type = ServiceType.EmailServer, VendorName = "Various" } },
+            { 110, new ServiceInfo { Name = "POP3", Type = ServiceType.EmailServer, VendorName = "Various" } },
+            { 995, new ServiceInfo { Name = "POP3 SSL", Type = ServiceType.EmailServer, VendorName = "Various" } },
+            { 143, new ServiceInfo { Name = "IMAP", Type = ServiceType.EmailServer, VendorName = "Various" } },
+            { 993, new ServiceInfo { Name = "IMAP SSL", Type = ServiceType.EmailServer, VendorName = "Various" } },
+            
+            // IoT and Smart Home
+            { 1883, new ServiceInfo { Name = "MQTT", Type = ServiceType.IoT, VendorName = "Various" } },
+            { 8883, new ServiceInfo { Name = "MQTT SSL", Type = ServiceType.IoT, VendorName = "Various" } },
+            { 9001, new ServiceInfo { Name = "MQTT Dashboard", Type = ServiceType.IoT, VendorName = "Various" } },
+            { 1880, new ServiceInfo { Name = "Node-RED", Type = ServiceType.IoT, VendorName = "Node-RED" } },
+            
+            // VPN
+            { 1194, new ServiceInfo { Name = "OpenVPN", Type = ServiceType.RemoteAccess, VendorName = "OpenVPN" } },
+            { 1723, new ServiceInfo { Name = "PPTP VPN", Type = ServiceType.RemoteAccess, VendorName = "Microsoft" } },
+            { 500, new ServiceInfo { Name = "IPsec", Type = ServiceType.RemoteAccess, VendorName = "Various" } },
+            { 4500, new ServiceInfo { Name = "IPsec NAT-T", Type = ServiceType.RemoteAccess, VendorName = "Various" } },
+            { 51820, new ServiceInfo { Name = "WireGuard", Type = ServiceType.RemoteAccess, VendorName = "WireGuard" } },
+            
+            // Game Servers
+            { 25565, new ServiceInfo { Name = "Minecraft", Type = ServiceType.GameServer, VendorName = "Mojang" } },
+            { 27015, new ServiceInfo { Name = "Steam/Source Games", Type = ServiceType.GameServer, VendorName = "Valve" } },
+            
+            // Voice/Video
+            { 3478, new ServiceInfo { Name = "STUN", Type = ServiceType.VOIP, VendorName = "Various" } },
+            { 3479, new ServiceInfo { Name = "STUN TLS", Type = ServiceType.VOIP, VendorName = "Various" } },
+            { 5060, new ServiceInfo { Name = "SIP", Type = ServiceType.VOIP, VendorName = "Various" } },
+            { 5061, new ServiceInfo { Name = "SIP TLS", Type = ServiceType.VOIP, VendorName = "Various" } },
+            
+            // Misc
+            { 53, new ServiceInfo { Name = "DNS", Type = ServiceType.Network, VendorName = "Various" } },
+            { 123, new ServiceInfo { Name = "NTP", Type = ServiceType.Network, VendorName = "Various" } },
+            { 161, new ServiceInfo { Name = "SNMP", Type = ServiceType.Network, VendorName = "Various" } },
+            { 162, new ServiceInfo { Name = "SNMP Trap", Type = ServiceType.Network, VendorName = "Various" } },
+            { 389, new ServiceInfo { Name = "LDAP", Type = ServiceType.Directory, VendorName = "Various" } },
+            { 636, new ServiceInfo { Name = "LDAPS", Type = ServiceType.Directory, VendorName = "Various" } },
+            { 3306, new ServiceInfo { Name = "MySQL", Type = ServiceType.Database, VendorName = "Oracle" } }
         };
 
         public static async Task EnsureNmapInstalledAsync()
@@ -403,8 +499,9 @@ namespace LanScannerTool
                     {
                         FileName = "nmap",
                         // -sn: Ping scan - disable port scan (for initial discovery)
+                        // --dns-servers: Use Google's DNS servers for better name resolution
                         // -oG -: Output in greppable format to stdout
-                        Arguments = $"-sn -oG - {network}",
+                        Arguments = $"-sn --dns-servers 8.8.8.8,8.8.4.4 -oG - {network}",
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
                         CreateNoWindow = true
@@ -470,6 +567,20 @@ namespace LanScannerTool
                                         if (!string.IsNullOrEmpty(netbiosName))
                                         {
                                             hostname = netbiosName;
+                                        }
+                                    }
+                                    
+                                    // If still unknown, try mDNS (Multicast DNS) for discovery of local devices
+                                    if (hostname == "unknown")
+                                    {
+                                        string mdnsName = await TryMdnsResolutionAsync(ip);
+                                        if (!string.IsNullOrEmpty(mdnsName))
+                                        {
+                                            hostname = mdnsName;
+                                            if (string.IsNullOrEmpty(fqdn) && mdnsName.Contains(".local"))
+                                            {
+                                                fqdn = mdnsName;
+                                            }
                                         }
                                     }
                                 }
@@ -541,7 +652,8 @@ namespace LanScannerTool
                         // --version-intensity 2: Quicker service detection
                         // -F: Fast mode - scan fewer ports
                         // --open: Only show open ports
-                        Arguments = $"-sS -sV --version-intensity 2 -F --open {host.IpAddress}",
+                        // --host-timeout 30s: Limit scan time per host
+                        Arguments = $"-sS -sV --version-intensity 2 -F --open --host-timeout 30s {host.IpAddress}",
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
                         CreateNoWindow = true
@@ -554,8 +666,28 @@ namespace LanScannerTool
                 
                 if (process.ExitCode == 0)
                 {
+                    // Try to extract hostname from nmap output as it might have additional info
+                    Match hostnameMatch = Regex.Match(output, @"Nmap scan report for (.+) \(");
+                    if (hostnameMatch.Success && !string.IsNullOrEmpty(hostnameMatch.Groups[1].Value) &&
+                        host.Hostname == "unknown")
+                    {
+                        string nmapHostname = hostnameMatch.Groups[1].Value.Trim();
+                        if (nmapHostname.Contains("."))
+                        {
+                            host.Fqdn = nmapHostname;
+                            host.Hostname = nmapHostname.Split('.')[0];
+                        }
+                        else
+                        {
+                            host.Hostname = nmapHostname;
+                        }
+                    }
+                    
                     // Parse port scan results
                     ParsePortScanResults(host, output);
+                    
+                    // Try additional scans for OS detection
+                    await TryOsDetectionAsync(host);
                 }
             }
             catch (Exception ex)
@@ -625,31 +757,126 @@ namespace LanScannerTool
             serviceInfo = serviceInfo.ToLower();
             
             // Detect various admin interfaces based on service info
-            if (serviceInfo.Contains("synology") || serviceInfo.Contains("dsm"))
+            if (serviceInfo.Contains("synology") || 
+                serviceInfo.Contains("dsm") || 
+                serviceInfo.Contains("diskstation"))
             {
                 AddServiceIfNotExists(host, "Synology DSM", ServiceType.AdminInterface, "Synology", portInfo.Port);
             }
-            else if (serviceInfo.Contains("pihole") || serviceInfo.Contains("pi-hole"))
+            else if (serviceInfo.Contains("pihole") || 
+                    serviceInfo.Contains("pi-hole") || 
+                    serviceInfo.Contains("pi hole"))
             {
                 AddServiceIfNotExists(host, "Pi-hole Admin", ServiceType.AdminInterface, "Pi-hole", portInfo.Port);
             }
-            else if (serviceInfo.Contains("nginx") && serviceInfo.Contains("proxy"))
+            else if ((serviceInfo.Contains("nginx") && serviceInfo.Contains("proxy")) || 
+                    serviceInfo.Contains("npmplus") || 
+                    (portInfo.Port == 81 && serviceInfo.Contains("nginx")))
             {
                 AddServiceIfNotExists(host, "NPMPlus/Nginx Proxy Manager", ServiceType.AdminInterface, "NPMPlus", portInfo.Port);
             }
-            else if (serviceInfo.Contains("plex"))
+            else if (serviceInfo.Contains("qnap") || 
+                    serviceInfo.Contains("qts") || 
+                    serviceInfo.Contains("nas"))
+            {
+                AddServiceIfNotExists(host, "QNAP NAS", ServiceType.AdminInterface, "QNAP", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("unifi") || 
+                    (portInfo.Port == 8443 && serviceInfo.Contains("ubiquiti")))
+            {
+                AddServiceIfNotExists(host, "UniFi Controller", ServiceType.AdminInterface, "Ubiquiti", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("truenas") || 
+                    serviceInfo.Contains("freenas") || 
+                    (serviceInfo.Contains("nas") && serviceInfo.Contains("ixsystems")))
+            {
+                AddServiceIfNotExists(host, "TrueNAS/FreeNAS", ServiceType.AdminInterface, "iXsystems", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("opnsense") || 
+                    serviceInfo.Contains("pfsense") || 
+                    (serviceInfo.Contains("firewall") && (serviceInfo.Contains("bsd") || serviceInfo.Contains("pf"))))
+            {
+                string vendor = serviceInfo.Contains("opnsense") ? "OPNsense" : "pfSense";
+                AddServiceIfNotExists(host, vendor + " Firewall", ServiceType.AdminInterface, vendor, portInfo.Port);
+            }
+            else if (serviceInfo.Contains("home assistant") || 
+                    serviceInfo.Contains("homeassistant") || 
+                    portInfo.Port == 8123)
+            {
+                AddServiceIfNotExists(host, "Home Assistant", ServiceType.IoT, "Home Assistant", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("docker") || 
+                    serviceInfo.Contains("portainer") || 
+                    portInfo.Port == 9000)
+            {
+                if (serviceInfo.Contains("portainer"))
+                {
+                    AddServiceIfNotExists(host, "Portainer", ServiceType.AdminInterface, "Portainer", portInfo.Port);
+                }
+                else
+                {
+                    AddServiceIfNotExists(host, "Docker API", ServiceType.AdminInterface, "Docker", portInfo.Port);
+                }
+            }
+            else if (serviceInfo.Contains("plex") || portInfo.Port == 32400)
             {
                 AddServiceIfNotExists(host, "Plex Media Server", ServiceType.MediaServer, "Plex", portInfo.Port);
             }
-            else if (serviceInfo.Contains("jellyfin"))
+            else if (serviceInfo.Contains("jellyfin") || portInfo.Port == 8096)
             {
                 AddServiceIfNotExists(host, "Jellyfin", ServiceType.MediaServer, "Jellyfin", portInfo.Port);
             }
-            else if (serviceInfo.Contains("emby"))
+            else if (serviceInfo.Contains("emby") || portInfo.Port == 8920)
             {
                 AddServiceIfNotExists(host, "Emby", ServiceType.MediaServer, "Emby", portInfo.Port);
             }
-            else if (portInfo.Port == 80 || portInfo.Port == 443 || portInfo.Port == 8080 || portInfo.Port == 8443)
+            else if (serviceInfo.Contains("wordpress") || 
+                    serviceInfo.Contains("wp-admin") || 
+                    serviceInfo.Contains("wp-login"))
+            {
+                AddServiceIfNotExists(host, "WordPress", ServiceType.CMS, "WordPress", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("joomla"))
+            {
+                AddServiceIfNotExists(host, "Joomla", ServiceType.CMS, "Joomla", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("drupal"))
+            {
+                AddServiceIfNotExists(host, "Drupal", ServiceType.CMS, "Drupal", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("grafana"))
+            {
+                AddServiceIfNotExists(host, "Grafana", ServiceType.Monitoring, "Grafana", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("prometheus"))
+            {
+                AddServiceIfNotExists(host, "Prometheus", ServiceType.Monitoring, "Prometheus", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("jenkins"))
+            {
+                AddServiceIfNotExists(host, "Jenkins", ServiceType.DevOps, "Jenkins", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("gitlab"))
+            {
+                AddServiceIfNotExists(host, "GitLab", ServiceType.DevOps, "GitLab", portInfo.Port);
+            }
+            else if (serviceInfo.Contains("hikvision") || 
+                    serviceInfo.Contains("dahua") || 
+                    serviceInfo.Contains("axis") || 
+                    serviceInfo.Contains("rtsp") || 
+                    serviceInfo.Contains("camera") || 
+                    portInfo.Port == 554)
+            {
+                string vendor = "Unknown";
+                if (serviceInfo.Contains("hikvision")) vendor = "Hikvision";
+                else if (serviceInfo.Contains("dahua")) vendor = "Dahua";
+                else if (serviceInfo.Contains("axis")) vendor = "Axis";
+                
+                AddServiceIfNotExists(host, "IP Camera", ServiceType.SecurityCamera, vendor, portInfo.Port);
+            }
+            else if (portInfo.Port == 80 || portInfo.Port == 443 || 
+                    portInfo.Port == 8080 || portInfo.Port == 8443 || 
+                    portInfo.Port == 8000 || portInfo.Port == 8888)
             {
                 // Generic web interface
                 string protocol = (portInfo.Port == 443 || portInfo.Port == 8443) ? "HTTPS" : "HTTP";
@@ -819,6 +1046,127 @@ namespace LanScannerTool
             return "";
         }
 
+        private async Task<string> TryMdnsResolutionAsync(string ip)
+        {
+            try
+            {
+                // Use avahi-resolve or similar tools for mDNS resolution
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "avahi-resolve",
+                        Arguments = $"-a {ip}",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                
+                process.Start();
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
+                {
+                    // Parse avahi output: 192.168.1.1	device.local
+                    string[] parts = output.Trim().Split('\t');
+                    if (parts.Length >= 2)
+                    {
+                        return parts[1].Trim();
+                    }
+                }
+                
+                // If avahi-resolve fails, try using dns-sd
+                process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "dns-sd",
+                        Arguments = $"-G v4 {ip}",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                
+                process.Start();
+                output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
+                {
+                    // Try to extract hostname from dns-sd output
+                    Match match = Regex.Match(output, @"can be reached at ([\w.-]+)\.local");
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value + ".local";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during mDNS resolution: {ex.Message}");
+            }
+            
+            return string.Empty;
+        }
+
+        private async Task TryOsDetectionAsync(HostInfo host)
+        {
+            try
+            {
+                // Use nmap for OS detection (requires root/admin privileges)
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "nmap",
+                        // -O: OS detection
+                        // --osscan-limit: Limit OS detection to promising targets
+                        // -T4: Faster timing template
+                        // --max-os-tries 1: Limit OS detection attempts
+                        Arguments = $"-O --osscan-limit -T4 --max-os-tries 1 {host.IpAddress}",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                
+                process.Start();
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode == 0)
+                {
+                    // Extract OS information
+                    Match osMatch = Regex.Match(output, @"OS details: (.+)");
+                    if (osMatch.Success && !string.IsNullOrEmpty(osMatch.Groups[1].Value))
+                    {
+                        host.OsInfo = osMatch.Groups[1].Value.Trim();
+                        
+                        // Try to extract device type
+                        if (host.OsInfo.Contains("Linux") && (host.OsInfo.Contains("router") || host.OsInfo.Contains("WAP")))
+                        {
+                            AddServiceIfNotExists(host, "Router/Access Point", ServiceType.Network, "Unknown", 0);
+                        }
+                        else if (host.OsInfo.Contains("printer"))
+                        {
+                            AddServiceIfNotExists(host, "Printer", ServiceType.Print, "Unknown", 0);
+                        }
+                        else if (host.OsInfo.Contains("NAS"))
+                        {
+                            AddServiceIfNotExists(host, "Network Storage (NAS)", ServiceType.FileSharing, "Unknown", 0);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during OS detection for {host.IpAddress}: {ex.Message}");
+            }
+        }
+
         private async Task<List<HostInfo>> FallbackPingScanAsync(string subnet)
         {
             List<HostInfo> hosts = new List<HostInfo>();
@@ -941,6 +1289,7 @@ namespace LanScannerTool
         public string Fqdn { get; set; } = "";
         public List<PortInfo> OpenPorts { get; set; } = new List<PortInfo>();
         public List<DetectedService> DetectedServices { get; set; } = new List<DetectedService>();
+        public string OsInfo { get; set; } = "";
     }
     
     public class PortInfo
@@ -972,6 +1321,12 @@ namespace LanScannerTool
         VOIP,
         EmailServer,
         GameServer,
-        IoT
+        IoT,
+        Network,
+        Directory,
+        SecurityCamera,
+        Monitoring,
+        DevOps,
+        CMS
     }
 } 
