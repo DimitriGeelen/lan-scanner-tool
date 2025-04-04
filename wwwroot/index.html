@@ -167,6 +167,26 @@
                             You can also use this tool from the command line:
                         </p>
                         <pre><code>dotnet run 192.168.1 --port-scan</code></pre>
+                        
+                        <hr>
+                        <h6><i class="bi bi-info-circle"></i> Troubleshooting</h6>
+                        <div class="alert alert-secondary">
+                            <p><strong>If hostname resolution is not working:</strong></p>
+                            <ul>
+                                <li>Ensure your DNS server is properly configured</li>
+                                <li>Some devices may not have reverse DNS records</li>
+                                <li>Try enabling port scanning which performs more thorough checks</li>
+                                <li>The tool tries multiple methods, including nslookup, NetBIOS, and mDNS</li>
+                            </ul>
+                            
+                            <p><strong>If service detection shows no results:</strong></p>
+                            <ul>
+                                <li>Make sure port scanning is enabled (checkbox)</li>
+                                <li>Some devices may have firewalls blocking the scan</li>
+                                <li>Administrative privileges may be required for complete scans</li>
+                                <li>Service detection works best on devices with common service ports</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

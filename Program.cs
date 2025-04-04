@@ -78,7 +78,27 @@ namespace LanScannerTool
                     Console.WriteLine($"Starting scan of subnet: {subnet} with port scanning: {includePortScan}");
                     var hosts = await scanner.ScanNetworkWithNmapAsync(subnet, includePortScan);
                     
-                    return Results.Json(hosts);
+                    // Convert to a format that will properly serialize
+                    var result = hosts.Select(h => new {
+                        ipAddress = h.IpAddress,
+                        hostname = h.Hostname,
+                        fqdn = h.Fqdn,
+                        osInfo = h.OsInfo,
+                        openPorts = h.OpenPorts.Select(p => new {
+                            port = p.Port,
+                            serviceName = p.ServiceName,
+                            version = p.Version
+                        }).ToList(),
+                        detectedServices = h.DetectedServices.Select(s => new {
+                            serviceName = s.ServiceName,
+                            serviceType = s.ServiceType.ToString(),
+                            vendorName = s.VendorName,
+                            port = s.Port,
+                            accessUrl = s.AccessUrl
+                        }).ToList()
+                    }).ToList();
+                    
+                    return Results.Json(result);
                 }
                 catch (Exception ex)
                 {
@@ -653,7 +673,8 @@ namespace LanScannerTool
                         // -F: Fast mode - scan fewer ports
                         // --open: Only show open ports
                         // --host-timeout 30s: Limit scan time per host
-                        Arguments = $"-sS -sV --version-intensity 2 -F --open --host-timeout 30s {host.IpAddress}",
+                        // -Pn: Treat all hosts as online (skip ping check)
+                        Arguments = $"-sS -sV -Pn --version-intensity 2 -F --open --host-timeout 30s {host.IpAddress}",
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
                         CreateNoWindow = true
@@ -667,7 +688,7 @@ namespace LanScannerTool
                 if (process.ExitCode == 0)
                 {
                     // Try to extract hostname from nmap output as it might have additional info
-                    Match hostnameMatch = Regex.Match(output, @"Nmap scan report for (.+) \(");
+                    Match hostnameMatch = Regex.Match(output, @"Nmap scan report for (.+?) \(");
                     if (hostnameMatch.Success && !string.IsNullOrEmpty(hostnameMatch.Groups[1].Value) &&
                         host.Hostname == "unknown")
                     {
@@ -717,8 +738,14 @@ namespace LanScannerTool
                         ServiceName = service,
                         Version = version
                     });
+                    
+                    // Add debug output
+                    Console.WriteLine($"Found port {port} ({service}) on {host.IpAddress}");
                 }
             }
+            
+            // Debug output
+            Console.WriteLine($"Total ports found for {host.IpAddress}: {host.OpenPorts.Count}");
         }
         
         private void IdentifyServices(HostInfo host)
@@ -955,7 +982,37 @@ namespace LanScannerTool
         {
             try
             {
-                var dnsProcess = new Process
+                // Try nslookup with Google DNS first
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "nslookup",
+                        Arguments = $"{ip} 8.8.8.8",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                
+                process.Start();
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
+                {
+                    // Improved regex pattern to handle a wider variety of nslookup outputs
+                    Match nameMatch = Regex.Match(output, @"(?:name\s*=\s*|\s*=\s*|PTR record\s*)([a-zA-Z0-9][\w\.-]+\.[a-zA-Z0-9][\w\.-]+(?:\.[a-zA-Z0-9][\w\.-]+)*)");
+                    if (nameMatch.Success && !string.IsNullOrEmpty(nameMatch.Groups[1].Value))
+                    {
+                        string fqdn = nameMatch.Groups[1].Value.Trim();
+                        string hostname = fqdn.Split('.')[0];
+                        return (hostname, fqdn);
+                    }
+                }
+                
+                // Try with local DNS as fallback
+                process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
@@ -967,29 +1024,44 @@ namespace LanScannerTool
                     }
                 };
                 
-                dnsProcess.Start();
-                string dnsOutput = await dnsProcess.StandardOutput.ReadToEndAsync();
-                await dnsProcess.WaitForExitAsync();
+                process.Start();
+                output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
                 
-                // Look for "name = example.domain.com"
-                Match fqdnMatch = Regex.Match(dnsOutput, @"name\s*=\s*([^\s]+)");
-                if (fqdnMatch.Success && !string.IsNullOrEmpty(fqdnMatch.Groups[1].Value))
+                if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
                 {
-                    string fqdn = fqdnMatch.Groups[1].Value;
-                    if (fqdn.EndsWith("."))
+                    // Try with improved regex pattern
+                    Match nameMatch = Regex.Match(output, @"(?:name\s*=\s*|\s*=\s*|PTR record\s*)([a-zA-Z0-9][\w\.-]+\.[a-zA-Z0-9][\w\.-]+(?:\.[a-zA-Z0-9][\w\.-]+)*)");
+                    if (nameMatch.Success && !string.IsNullOrEmpty(nameMatch.Groups[1].Value))
                     {
-                        fqdn = fqdn.Substring(0, fqdn.Length - 1);
+                        string fqdn = nameMatch.Groups[1].Value.Trim();
+                        string hostname = fqdn.Split('.')[0];
+                        return (hostname, fqdn);
                     }
-                    string hostname = fqdn.Split('.')[0];
-                    return (hostname, fqdn);
+                }
+                
+                try
+                {
+                    // Also try the built-in .NET DNS resolution
+                    IPHostEntry hostEntry = await Dns.GetHostEntryAsync(ip);
+                    if (!string.IsNullOrEmpty(hostEntry.HostName))
+                    {
+                        string fqdn = hostEntry.HostName;
+                        string hostname = fqdn.Split('.')[0];
+                        return (hostname, fqdn);
+                    }
+                }
+                catch
+                {
+                    // .NET DNS resolution failed, continue with other methods
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // DNS resolution failed, keep as unknown
+                Console.WriteLine($"Error during DNS resolution: {ex.Message}");
             }
             
-            return ("", "");
+            return (string.Empty, string.Empty);
         }
         
         private async Task<string> TryNetBiosResolutionAsync(string ip)
