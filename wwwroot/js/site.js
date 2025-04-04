@@ -7,9 +7,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsTable = document.getElementById('resultsTable');
     const resultsBody = document.getElementById('resultsBody');
     const downloadCsvButton = document.getElementById('downloadCsvButton');
+    const includePortScanCheckbox = document.getElementById('includePortScan');
     
-    // Current subnet
+    // Modal elements
+    const serviceModal = new bootstrap.Modal(document.getElementById('serviceModal'));
+    const serviceModalLabel = document.getElementById('serviceModalLabel');
+    const portsTableBody = document.getElementById('portsTableBody');
+    const servicesTableBody = document.getElementById('servicesTableBody');
+    
+    // Current subnet and port scan option
     let currentSubnet = '';
+    let currentPortScan = false;
+    
+    // Show services column if port scanning is enabled
+    includePortScanCheckbox.addEventListener('change', function() {
+        const servicesColumn = document.querySelector('.col-services');
+        if (this.checked) {
+            servicesColumn.classList.remove('d-none');
+        } else {
+            servicesColumn.classList.add('d-none');
+        }
+    });
     
     // Form submit event
     scanForm.addEventListener('submit', async function(e) {
@@ -19,13 +37,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(scanForm);
         const subnet = formData.get('subnet');
         currentSubnet = subnet;
+        currentPortScan = formData.has('includePortScan') && formData.get('includePortScan') === 'true';
+        
+        // Update UI based on port scan option
+        const servicesColumn = document.querySelector('.col-services');
+        if (currentPortScan) {
+            servicesColumn.classList.remove('d-none');
+        } else {
+            servicesColumn.classList.add('d-none');
+        }
         
         // Show loading state
         scanButton.disabled = true;
         scanSpinner.classList.remove('d-none');
         resultsInfo.classList.remove('alert-success', 'alert-danger');
         resultsInfo.classList.add('alert-info');
-        resultsInfo.textContent = 'Scanning network... This may take a while.';
+        resultsInfo.textContent = currentPortScan ? 
+            'Scanning network and detecting services... This may take a while.' : 
+            'Scanning network... This may take a while.';
         resultsTable.classList.add('d-none');
         downloadCsvButton.classList.add('d-none');
         
@@ -73,8 +102,8 @@ document.addEventListener('DOMContentLoaded', function() {
     downloadCsvButton.addEventListener('click', function() {
         if (!currentSubnet) return;
         
-        // Create a download link
-        const downloadUrl = `/api/download-csv?subnet=${encodeURIComponent(currentSubnet)}`;
+        // Create a download link with port scan option
+        const downloadUrl = `/api/download-csv?subnet=${encodeURIComponent(currentSubnet)}${currentPortScan ? '&includePortScan=true' : ''}`;
         window.location.href = downloadUrl;
     });
     
@@ -92,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add each host to the table
         hosts.forEach(host => {
             const row = document.createElement('tr');
+            row.setAttribute('data-host', JSON.stringify(host));
             
             // IP Address
             const ipCell = document.createElement('td');
@@ -108,11 +138,126 @@ document.addEventListener('DOMContentLoaded', function() {
             fqdnCell.textContent = host.fqdn || '-';
             row.appendChild(fqdnCell);
             
+            // Services (if port scan was performed)
+            const servicesCell = document.createElement('td');
+            if (host.detectedServices && host.detectedServices.length > 0) {
+                // Create button to show services
+                const servicesButton = document.createElement('button');
+                servicesButton.className = 'btn btn-sm btn-outline-primary';
+                servicesButton.innerHTML = '<i class="bi bi-info-circle"></i> ' + host.detectedServices.length + ' services';
+                servicesButton.addEventListener('click', function() {
+                    showServiceDetails(host);
+                });
+                servicesCell.appendChild(servicesButton);
+            } else if (host.openPorts && host.openPorts.length > 0) {
+                // Create button to show ports
+                const portsButton = document.createElement('button');
+                portsButton.className = 'btn btn-sm btn-outline-secondary';
+                portsButton.innerHTML = '<i class="bi bi-hdd-network"></i> ' + host.openPorts.length + ' ports';
+                portsButton.addEventListener('click', function() {
+                    showServiceDetails(host);
+                });
+                servicesCell.appendChild(portsButton);
+            } else {
+                servicesCell.textContent = 'No services detected';
+            }
+            servicesCell.classList.add('col-services');
+            if (!currentPortScan) {
+                servicesCell.classList.add('d-none');
+            }
+            row.appendChild(servicesCell);
+            
             // Add the row to the table
             resultsBody.appendChild(row);
         });
         
         // Show the table
         resultsTable.classList.remove('d-none');
+    }
+    
+    // Function to show service details modal
+    function showServiceDetails(host) {
+        // Set modal title
+        serviceModalLabel.textContent = `Services on ${host.ipAddress} (${host.hostname})`;
+        
+        // Clear previous data
+        portsTableBody.innerHTML = '';
+        servicesTableBody.innerHTML = '';
+        
+        // Add open ports
+        if (host.openPorts && host.openPorts.length > 0) {
+            host.openPorts.forEach(port => {
+                const row = document.createElement('tr');
+                
+                // Port
+                const portCell = document.createElement('td');
+                portCell.textContent = port.port;
+                row.appendChild(portCell);
+                
+                // Service
+                const serviceCell = document.createElement('td');
+                serviceCell.textContent = port.serviceName || '-';
+                row.appendChild(serviceCell);
+                
+                // Version
+                const versionCell = document.createElement('td');
+                versionCell.textContent = port.version || '-';
+                row.appendChild(versionCell);
+                
+                portsTableBody.appendChild(row);
+            });
+        } else {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.textContent = 'No open ports detected';
+            cell.colSpan = 3;
+            cell.className = 'text-center';
+            row.appendChild(cell);
+            portsTableBody.appendChild(row);
+        }
+        
+        // Add detected services
+        if (host.detectedServices && host.detectedServices.length > 0) {
+            host.detectedServices.forEach(service => {
+                const row = document.createElement('tr');
+                
+                // Service
+                const serviceCell = document.createElement('td');
+                serviceCell.textContent = service.serviceName;
+                row.appendChild(serviceCell);
+                
+                // Vendor
+                const vendorCell = document.createElement('td');
+                vendorCell.textContent = service.vendorName;
+                row.appendChild(vendorCell);
+                
+                // Access URL
+                const accessCell = document.createElement('td');
+                if (service.accessUrl) {
+                    const link = document.createElement('a');
+                    link.href = service.accessUrl;
+                    link.textContent = 'Open';
+                    link.target = '_blank';
+                    link.className = 'btn btn-sm btn-outline-primary';
+                    accessCell.appendChild(link);
+                } else {
+                    accessCell.textContent = '-';
+                }
+                row.appendChild(accessCell);
+                
+                servicesTableBody.appendChild(row);
+            });
+        } else {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.textContent = 'No services identified';
+            cell.colSpan = 3;
+            cell.className = 'text-center';
+            row.appendChild(cell);
+            servicesTableBody.appendChild(row);
+        }
+        
+        // Show modal
+        serviceModal.show();
     }
 }); 

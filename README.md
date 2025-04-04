@@ -1,10 +1,10 @@
-# LAN Scanner Tool v2.0
+# LAN Scanner Tool v3.0
 
-A powerful C# application that scans a local area network subnet, retrieves hostnames, and exports the results to a CSV file. The tool features both a command-line interface and a web-based UI.
+A powerful C# application that scans a local area network subnet, retrieves hostnames, detects open ports, identifies running services, and exports the results to a CSV file. The tool features both a command-line interface and a web-based UI.
 
 ## Features
 
-- **Scan Capabilities**:
+- **Network Scanning**:
   - Scans an entire subnet (e.g., 192.168.1.0/24) for active hosts
   - Automatically installs Nmap if not present on the system
   - Uses Nmap for efficient and accurate host discovery
@@ -15,9 +15,25 @@ A powerful C# application that scans a local area network subnet, retrieves host
   - Fully Qualified Domain Names (FQDN) included when available
   - NetBIOS name resolution for Windows machines
 
+- **Port Scanning and Service Detection**:
+  - Scan for open ports on discovered hosts
+  - Service version detection for enhanced identification
+  - Auto-detection of common admin interfaces:
+    - Synology DSM (ports 5000/5001)
+    - Pi-hole admin interface
+    - NPMPlus/Nginx Proxy Manager
+  - Detection of other common services:
+    - Web servers (HTTP/HTTPS)
+    - File sharing services (SMB/CIFS, FTP)
+    - Remote access (SSH, Telnet, RDP)
+    - Media servers (Plex, Jellyfin, Emby)
+    - Databases (MySQL, PostgreSQL, etc.)
+
 - **Output Options**:
   - Command-line CSV output
   - Web interface with interactive results table
+  - Service details modal popup
+  - Direct access links to discovered web interfaces
   - CSV download option in web UI
 
 - **User Interfaces**:
@@ -39,8 +55,11 @@ A powerful C# application that scans a local area network subnet, retrieves host
 # Simple subnet scan
 dotnet run 192.168.1
 
-# Specific subnet with mask
-dotnet run 192.168.1.0/24
+# Subnet scan with port scanning and service detection
+dotnet run 192.168.1 --port-scan
+
+# Alternative short option
+dotnet run 192.168.1 -p
 ```
 
 ### Web Interface Mode
@@ -55,8 +74,11 @@ Then open your browser and navigate to `http://localhost:5000`
 ## Web Interface Features
 
 - User-friendly form for entering subnet to scan
+- Optional port scanning and service detection
 - Real-time scan status updates
 - Tabular display of scan results
+- Modal popups with detailed port and service information
+- Direct links to discovered admin interfaces
 - CSV export functionality
 - Responsive design for desktop and mobile
 
@@ -67,7 +89,11 @@ Then open your browser and navigate to `http://localhost:5000`
 3. If Nmap is not found, it attempts to install it using `apt-get`
 4. It then uses Nmap to perform a host discovery scan on the specified subnet
 5. For each discovered host, it attempts to resolve the hostname and FQDN
-6. If Nmap fails for any reason, it falls back to a basic ping scan
+6. If port scanning is enabled:
+   - Performs a SYN scan on common ports
+   - Identifies services running on open ports
+   - Matches against known service patterns (Synology DSM, Pi-hole, etc.)
+   - Generates access URLs for web interfaces
 7. In command-line mode, results are displayed in the console and saved to a CSV file
 8. In web mode, results are displayed in the browser and can be downloaded as CSV
 
@@ -86,11 +112,12 @@ LanScannerTool/
 │   └── index.html          # Main web interface page
 ```
 
-## Notes
+## Security Notes
 
-- The scan operation may take some time depending on the network size
-- Administrator privileges may be required for network operations and Nmap installation
-- The tool works best on Linux/Ubuntu systems but can be adapted for other platforms
+- Port scanning may trigger security alerts or be blocked by firewalls
+- Some networks may have restrictions on Nmap usage
+- The tool should be used responsibly and only on networks you have permission to scan
+- Administrator privileges may be required for certain scan types
 
 ## License
 

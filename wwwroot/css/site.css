@@ -49,4 +49,66 @@ code {
 
 .status-unknown {
     background-color: #ffc107;
+}
+
+/* Service detection styles */
+.service-badge {
+    display: inline-block;
+    padding: 0.25em 0.4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    color: #fff;
+    background-color: #0d6efd;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.service-badge.admin {
+    background-color: #dc3545;
+}
+
+.service-badge.web {
+    background-color: #0d6efd;
+}
+
+.service-badge.file {
+    background-color: #198754;
+}
+
+.service-badge.media {
+    background-color: #6610f2;
+}
+
+.service-badge.remote {
+    background-color: #fd7e14;
+}
+
+.service-badge.database {
+    background-color: #20c997;
+}
+
+tr.service-row:hover {
+    cursor: pointer;
+    background-color: rgba(0,0,0,.075);
+}
+
+.form-check-input:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Tooltip for warning about port scanning */
+.form-text.text-warning {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-text.text-warning i {
+    margin-right: 0.25rem;
 } 
